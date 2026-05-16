@@ -1,0 +1,7 @@
+data/
+__pycache__/
+*.pyc
+.idea/
+catboost_info/
+eda/plots/
+*.png
