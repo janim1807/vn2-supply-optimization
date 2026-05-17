@@ -31,17 +31,20 @@ Out-of-stock periods are masked (demand = NaN) so censored zeros don't bias the 
 
 ### Safety Stock (Conformal Prediction + ACI)
 
-Instead of assuming a parametric distribution, we use the model's own historical errors to set safety margins per SKU:
+Instead of assuming a parametric distribution, I use the model's own historical errors to set safety margins per SKU:
 
 1. Compute relative residuals: `(actual - predicted) / max(predicted, 1)`
 2. Weight recent residuals higher (exponential decay, halflife = 26 weeks)
 3. Take the weighted quantile at level α to get a margin ratio
 4. `safety_margin = forecast_h3 × margin_ratio`
 
-α adapts each round via Adaptive Conformal Inference:
+α adapts each round via Adaptive Conformal Inference (ACI, Gibbs & Candès 2021) — a method that adjusts the confidence level of prediction intervals online based on realized errors:
 - Start at α = 0.65
-- If realized coverage < optimal (too many stockouts) → raise α → bigger margins
-- If coverage is fine → lower α → reduce holding costs
+- After each round, check what fraction of SKUs had actual demand ≤ target stock
+- If coverage < optimal → raise α → bigger safety margins next round
+- If coverage > optimal → lower α → reduce holding costs next round
+
+This closes the loop between forecasting and inventory outcomes — the system self-corrects if it's over- or under-ordering.
 
 ### Order Policy
 
